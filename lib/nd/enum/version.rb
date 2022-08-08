@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Nd
+module ND
   module Enum
-    VERSION = "0.1.0"
+    VERSION = '0.1.0'
   end
 end
