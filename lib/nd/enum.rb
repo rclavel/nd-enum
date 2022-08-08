@@ -1,27 +1,38 @@
 # frozen_string_literal: true
 
+require 'active_record'
+require 'active_record/enum.rb'
+
+require 'active_support'
+require 'active_support/core_ext/string/inflections.rb'
+
 require_relative 'enum/version'
+require_relative 'enum/base'
 
 module ND
   module Enum
-    class << self
-      def nd_enum(db: false, i18n: {}, **configuration)
-        set_options(binding)
-        enum_module = define_module(@options)
+    extend ActiveSupport::Concern
 
-        define_db_enum(db, enum_module) if @options[:db]
+    included do
+      def self.nd_enum(db: false, i18n: {}, **configuration)
+        options = ND::Enum.set_options(binding, self)
+        enum_module = ND::Enum.define_module(options)
 
-        const_set(@options[:attribute].to_s.camelize, enum_module)
+        ND::Enum.define_db_enum(options, enum_module) if options[:db]
+
+        const_set(options[:attribute].to_s.camelize, enum_module)
       end
+    end
 
-      private
-
-      def set_options(caller_binding)
-        @options = method(:nd_enum).parameters.each_with_object({}) do |(_, name), options|
+    class << self
+      def set_options(caller_binding, caller_class)
+        options = caller_class.method(:nd_enum).parameters.each_with_object({}) do |(_, name), options|
           options[name.to_sym] = caller_binding.local_variable_get(name)
         end
-        @options[:attribute], @options[:values] = @options.delete(:configuration).to_a.first
-        @options[:model] = self
+        options[:attribute], options[:values] = options.delete(:configuration).to_a.first
+        options[:model] = caller_class
+
+        options
       end
 
       def define_module(options)
@@ -30,7 +41,7 @@ module ND
 
           # Public methods
 
-          define_singleton_method(:all)     { options[:values] }
+          define_singleton_method(:all) { options[:values] }
 
           # Private methods
 
@@ -52,9 +63,13 @@ module ND
       end
 
       def define_db_enum(options, enum_module)
-        options = options.is_a?(Hash) ? options : {}
-        enum(@attribute => enum_module.to_h, **options)
+        enum_options = options[:db].is_a?(Hash) ? options[:db] : {}
+        options[:model].enum(options[:attribute] => enum_module.to_h, **enum_options)
       end
     end
   end
+end
+
+class ActiveRecord::Base
+  include ND::Enum
 end
