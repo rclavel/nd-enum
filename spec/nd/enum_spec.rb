@@ -13,11 +13,11 @@ class DummyDb < ApplicationRecord
 end
 
 class DummyPrefix < ApplicationRecord
-  nd_enum(role: %w(user admin), db: { _prefix: true })
+  nd_enum(role: %w(user admin), db: { prefix: true })
 end
 
 class DummyCustomPrefix < ApplicationRecord
-  nd_enum(role: %w(user admin), db: { _prefix: 'foobar' })
+  nd_enum(role: %w(user admin), db: { prefix: 'foobar' })
 end
 
 RSpec.describe ND::Enum do
@@ -90,6 +90,11 @@ RSpec.describe ND::Enum do
     it 'translate with custom scope' do
       I18n.expects(:t).with(:user, scope: 'users.role.custom')
       User::Role.t(:user, :custom)
+    end
+
+    it 'is aliased with translate method' do
+      I18n.expects(:t).with(:user, scope: 'users.role.base')
+      User::Role.translate(:user)
     end
   end
 

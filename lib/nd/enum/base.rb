@@ -30,6 +30,7 @@ module ND
           def t(value, scope = :base)
             I18n.t(value, scope: "#{model.table_name}.#{attribute}.#{scope}")
           end
+          alias_method :translate, :t
         end
       end
     end

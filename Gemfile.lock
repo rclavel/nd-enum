@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    nd-enum (0.1.1)
+    nd-enum (0.1.2)
       activerecord (>= 6.0.0)
       activesupport (>= 6.0.0)
 

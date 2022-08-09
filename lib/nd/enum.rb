@@ -64,6 +64,10 @@ module ND
 
       def define_db_enum(options, enum_module)
         enum_options = options[:db].is_a?(Hash) ? options[:db] : {}
+
+        enum_options[:_prefix] = enum_options.delete(:prefix) if enum_options.key?(:prefix)
+        enum_options[:_suffix] = enum_options.delete(:suffix) if enum_options.key?(:suffix)
+
         options[:model].enum(options[:attribute] => enum_module.to_h, **enum_options)
       end
     end
