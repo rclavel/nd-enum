@@ -15,7 +15,10 @@ If bundler is not being used to manage dependencies, install the gem by executin
 ## Usage
 
 - [Basic usage](#basic-usage)
+- [Configuration](#configuration)
 - [I18n](#i18n)
+  - [Validate translations presence](#validate-translations-presence)
+  - [Enforce translations presence](#enforce-translations-presence)
 - [ActiveRecord Enum](#activerecord-enum)
 
 ### Basic usage
@@ -60,6 +63,18 @@ irb(main)> User::Role.include?('user')
 
 ND::Enum inheritates from [`Enumerable`](https://ruby-doc.org/core-3.1.2/Enumerable.html), so it is possible to use all `Enumerable` methods on the enum module: `each`, `map`, `find`...
 
+### Configuration
+
+Fine-tune `ND::Enum` behaviour by creating an initializer (for example: `config/initializers/nd_enum.rb`).
+The values shown in the example below are the default values.
+
+```ruby
+ND::Enum.configure do |c|
+  c.default_i18n_scope = :base
+  c.default_i18n_validation_mode = :ignore # Allowed values: ignore, log, enforce
+end
+```
+
 ### I18n
 
 Allows to translate your enum values.
@@ -90,6 +105,45 @@ Use a different scope to have several translations for a single value, depending
 irb(main)> User::Role.t(:user, :foobar)
 => "translation missing: en.users.role.foobar.user"
 ```
+
+Please note that the default scope (`base`) can be configured using the `default_i18n_scope` initializer option.
+
+#### Validate translations presence
+
+Validate that your enum are translated. By default, this feature is disabled.
+
+```ruby
+class User < ApplicationRecord
+  nd_enum(role: %i(user admin), i18n: { mode: :log })
+end
+```
+
+It will log the missing translations for each scope & locale. For example:
+
+```
+I, [2022-08-10T21:17:53.931669 #67401]  INFO -- : ND::Enum: User#role scopes=[:base, :short]
+I, [2022-08-10T21:17:53.931669 #67401]  INFO -- : ND::Enum: User#role locale=en missing_keys=[]
+I, [2022-08-10T21:17:53.931669 #67401]  INFO -- : ND::Enum: User#role locale=nl missing_keys=["users.role.base.user", "users.role.short.user"]
+```
+
+This mode can be used as default with the `c.default_i18n_validation_mode = :log` initializer option.
+
+#### Enforce translations presence
+
+Raise an exception when some translations are missing.
+
+```ruby
+class User < ApplicationRecord
+  nd_enum(role: %i(user admin), i18n: { mode: :enforce })
+end
+```
+
+```
+(irb):1:in `<main>': One or several translations are missing (ND::Enum::MissingTranslationError)
+        from bin/console:15:in `<main>'
+```
+
+This mode can be used as default with the `c.default_i18n_validation_mode = :enforce` initializer option.
 
 ### `ActiveRecord` Enum
 
